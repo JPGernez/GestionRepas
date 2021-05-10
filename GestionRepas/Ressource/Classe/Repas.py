@@ -18,8 +18,8 @@ class Repas:
             - nb de personne
             - commentaire
     """
-    def __init__(self, date: datetime, moment: str, recettes: [Recette] = None, ingredients: [Ingredient] = None, nb=4,
-                 commentaire='', id_repas: int = None):
+    def __init__(self, date: datetime = None, moment: str = None, recettes: [Recette] = None,
+                 ingredients: [Ingredient] = None, nb=4, commentaire='', id_repas: int = None):
         if recettes is None:
             recettes = []
         if ingredients is None:

@@ -4,10 +4,17 @@ import datetime
 import tkinter as tk
 
 import Ressource.Classe.Constante as Ct
-
+from Ressource.Classe.Bdd import Bdd
+from Ressource.Classe.Repas import Repas
+from Ressource.Classe.Recette import Recette
+from Ressource.Classe.Ingredient import Ingredient
 
 class Ecran_Accueil(tk.Frame):
     """Classe de l'écran d'accueil"""
+
+    def lecture_repas(self, date: datetime.date, moment: str):
+        """Recuperation du repas pour un jour donné, et un moment"""
+        repas = self.bdd.get_repas_date(date=date, moment=moment)
 
     def liste_jour(self):
         """Mise a jour de la liste des jours a faire apparaitre"""
@@ -15,10 +22,11 @@ class Ecran_Accueil(tk.Frame):
         for i in range(self.nb_jour):
             self.l_jours.append(self.premier_jour + datetime.timedelta(days=i))
 
-    def detail_repas(self, dt: datetime, m: str):
+    def detail_repas(self, dt: datetime.date, m: str):
         """Affichage du détail du repas sélectionné"""
         d = dt.strftime("%d/%m/%y")
         self.label_detail.config(text=f"Détail du repas du {d} {m}")
+        self.repas_select = self.bdd.get_repas_date(date=dt, moment=m)
 
     def affichage_calendrier(self):
         """Affichage du calendrier"""
@@ -34,14 +42,20 @@ class Ecran_Accueil(tk.Frame):
         for j in self.l_jours:
             jsem = Ct.JOURS[j.weekday()]
             dt = j.strftime("%d/%m")
-            label = tk.Label(f, text=f"{jsem} {dt}", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG, width=20, height=3)
+            label = tk.Label(f, text=f"{jsem} {dt}", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG, width=20, height=2)
             if j == datetime.date.today():
                 label.config(fg='yellow')
             label.grid(row=nb, column=0, sticky=tk.W)
-            label = tk.Label(f, text="Rien de prévu", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+            repas = '\n'.join(self.bdd.get_liste_menu_date(dt, 'Midi'))
+            if len(repas)<2:
+                repas = "Rien de prévu"
+            label = tk.Label(f, text=repas, font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
             label.bind("<Button-1>", lambda e, d=j: self.detail_repas(d, 'Midi'))
             label.grid(row=nb, column=1, sticky=tk.W)
-            label = tk.Label(f, text="Rien de prévu", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+            repas = '\n'.join(self.bdd.get_liste_menu_date(dt, 'Soir'))
+            if len(repas) < 2:
+                repas = "Rien de prévu"
+            label = tk.Label(f, text=repas, font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
             label.bind("<Button-1>", lambda e, d=j: self.detail_repas(d, 'Soir'))
             label.grid(row=nb, column=2, sticky=tk.W)
             nb += 1
@@ -53,6 +67,8 @@ class Ecran_Accueil(tk.Frame):
         # Init variable
         self.nb_jour = 7
         self.l_jours = []
+        self.bdd = Bdd()
+        self.repas_select = Repas()
 
         # Récupération du samedi de la semaine
         dt = datetime.date.today()

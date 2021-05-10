@@ -424,3 +424,34 @@ class Bdd:
             repas = Repas(date=row[1], moment=row[2], nb=row[3], commentaire=row[4],
                           ingredients=list_ing, recettes=list_recette, id_repas=row[0])
         return repas
+
+    def get_liste_menu_date(self, date: datetime.date, moment: str):
+        """ Récupération du repas à une date et un moemnt"""
+        cursor = self.conn.cursor()
+        cursor.execute("""SELECT id, commentaire FROM repas where date= ? and moment= ?""",
+                       (date, moment))
+        rows = cursor.fetchall()
+        list_ing = []
+        list_recette = []
+        list_menu = []
+        for row in rows:
+            id_repas = row[0]
+            cursor2 = self.conn.cursor()
+            cursor2.execute("""SELECT nom FROM repas_ingredients where id_repas= ?""", (id_repas,))
+            rows2 = cursor2.fetchall()
+            for row2 in rows2:
+                list_ing.append(row2[0])
+                list_ing.sort()
+                list_recette = []
+                cursor3 = self.conn.cursor()
+                cursor3.execute("""SELECT id_recette FROM repas_recettes where id_repas= ?""",
+                                (id_repas,))
+                rows3 = cursor3.fetchall()
+                for row3 in rows3:
+                    list_recette.append(self.get_recette(row3[0]).get_titre())
+                list_recette.sort()
+            list_menu = list_recette + list_ing
+            if len(row[1]) > 1:
+                comm = f"Rq: {row[0]}"
+                list_menu.append(comm)
+        return list_menu
