@@ -4,17 +4,15 @@ import datetime
 import tkinter as tk
 
 import Ressource.Classe.Constante as Ct
+from Ressource.Classe.AutocompletComboBox import AutocompleteCombobox
 from Ressource.Classe.Bdd import Bdd
 from Ressource.Classe.Repas import Repas
 from Ressource.Classe.Recette import Recette
 from Ressource.Classe.Ingredient import Ingredient
 
+
 class Ecran_Accueil(tk.Frame):
     """Classe de l'écran d'accueil"""
-
-    def lecture_repas(self, date: datetime.date, moment: str):
-        """Recuperation du repas pour un jour donné, et un moment"""
-        repas = self.bdd.get_repas_date(date=date, moment=moment)
 
     def liste_jour(self):
         """Mise a jour de la liste des jours a faire apparaitre"""
@@ -30,7 +28,7 @@ class Ecran_Accueil(tk.Frame):
 
     def affichage_calendrier(self):
         """Affichage du calendrier"""
-        f = tk.Frame(self.calendrier, bg=Ct.BG, bd=5, highlightbackground=Ct.FG, highlightthickness=1)
+        f = tk.Frame(self.frame_calendrier, bg=Ct.BG, bd=5, highlightbackground=Ct.FG, highlightthickness=1)
         f.grid_columnconfigure(0, weight=1)
         f.grid_columnconfigure(1, weight=10)
         f.grid_columnconfigure(2, weight=10)
@@ -47,7 +45,7 @@ class Ecran_Accueil(tk.Frame):
                 label.config(fg='yellow')
             label.grid(row=nb, column=0, sticky=tk.W)
             repas = '\n'.join(self.bdd.get_liste_menu_date(dt, 'Midi'))
-            if len(repas)<2:
+            if len(repas) < 2:
                 repas = "Rien de prévu"
             label = tk.Label(f, text=repas, font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
             label.bind("<Button-1>", lambda e, d=j: self.detail_repas(d, 'Midi'))
@@ -81,22 +79,41 @@ class Ecran_Accueil(tk.Frame):
         self.window = tk.Frame(self, bg=Ct.BG)
 
         # Affichage de la partie calendrier
-        self.calendrier = tk.Frame(self.window, bg=Ct.BG)
+        self.frame_calendrier = tk.Frame(self.window, bg=Ct.BG)
         self.affichage_calendrier()
-        self.calendrier.pack(padx=10, pady=10, fill=tk.X)
+        self.frame_calendrier.pack(padx=10, pady=10, fill=tk.X)
 
         # Affichage de la partie détail
-        self.detail = tk.Frame(self.window, bg=Ct.BG)
-        self.label_detail = tk.Label(self.detail, text="Sélectionnez un repas", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
-        self.label_detail.pack()
+        self.frame_detail = tk.Frame(self.window, bg=Ct.BG)
+        self.label_detail = tk.Label(self.frame_detail, text="Sélectionnez un repas", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+        self.label_detail.grid(column=0, row=0, sticky=tk.W)
 
         # liste des recettes
-        self.lbox_recette = tk.Listbox(self.detail, bd=2, width=50, font=Ct.FONT, fg=Ct.FG_TEXTE,
+        self.frame_liste_recette = tk.Frame(self.frame_detail, bg=Ct.BG)
+        self.lbox_recette = tk.Listbox(self.frame_liste_recette, bd=2, width=100, font=Ct.FONT, fg=Ct.FG_TEXTE,
                                        selectbackground=Ct.BG_SELECT, exportselection=tk.FALSE)
-        self.vscroll_recette = tk.Scrollbar(self.detail, command=self.lbox_recette.yview, bg=Ct.BG)
+        self.vscroll_recette = tk.Scrollbar(self.frame_liste_recette, command=self.lbox_recette.yview, bg=Ct.BG)
         self.lbox_recette.config(yscrollcommand=self.vscroll_recette.set)
         self.vscroll_recette.pack(side=tk.RIGHT, expand=tk.N, fill=tk.Y, padx=1, pady=1)
-        self.lbox_recette.pack(side=tk.LEFT, padx=2, pady=2, fill=tk.Y)
+        self.lbox_recette.pack(side=tk.LEFT, padx=2, pady=2)
+        self.frame_liste_recette.grid(column=0, row=1, rowspan=2, sticky=tk.W)
 
-        self.detail.pack()
+        self.frame_ajout_recette = tk.Frame(self.frame_detail, bg=Ct.BG)
+        self.label = tk.Label(self.frame_ajout_recette, text="Ajout recette:", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+        self.label.grid(row=0, column=0, columnspan=2, padx=2, sticky=tk.W)
+        self.ajout_recette_bouton = tk.Button(self.frame_ajout_recette, text="<-", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+        self.ajout_recette_bouton.grid(row=1, column=0, padx=2, sticky=tk.W)
+        self.saisirecette = AutocompleteCombobox(self.frame_ajout_recette, font=Ct.FONT)
+        self.saisirecette.grid(row=1, column=1, padx=2, sticky=tk.W)
+        self.label = tk.Label(self.frame_ajout_recette, text="Ajout ingredient:", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+        self.label.grid(row=2, column=0, columnspan=2, padx=2, pady=10, sticky=tk.W)
+        self.ajout_ingredient_bouton = tk.Button(self.frame_ajout_recette, text="<-", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
+        self.ajout_ingredient_bouton.grid(row=3, column=0, padx=2, sticky=tk.W)
+        self.saisiingredient = AutocompleteCombobox(self.frame_ajout_recette, font=Ct.FONT)
+        self.saisiingredient.grid(row=3, column=1, padx=2, sticky=tk.W)
+
+        self.frame_ajout_recette.grid(column=1, row=1, sticky=tk.W)
+
+        self.frame_detail.pack(padx=2, pady=2, fill=tk.X)
         self.window.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        self.detail_repas(self.premier_jour, 'Midi')
