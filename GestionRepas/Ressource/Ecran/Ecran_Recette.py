@@ -7,7 +7,7 @@ from tkinter import messagebox
 import webbrowser
 
 import Ressource.Ecran.Ecran_Accueil as Ecran_acceuil
-import Ressource.Ecran.Ecran_Liste_Recette as Ecran_liste_recettes
+import Ressource.Ecran.Ecran_Liste_Recette as Ecran_Liste_Recette
 import Ressource.Ecran.Ecran_Ingredient as Ecran_Ingredient
 
 import Ressource.Classe.Constante as Ct
@@ -25,7 +25,7 @@ class Ecran_Recette(tk.Frame):
 
     def recup_liste_ingredient(self):
         """ Recuperation de la liste des ingredients et de la liste des noms d'ingrédient"""
-        self.liste_ingredient_complete = Bdd.get_liste_ingredients(self.bdd)
+        self.liste_ingredient_complete = self.bdd.get_liste_ingredients()
         self.liste_ingredient_complete = sorted(self.liste_ingredient_complete, key=lambda ingredient: ingredient.nom)
         self.liste_nom_ingredient = []
         for i in self.liste_ingredient_complete:
@@ -35,11 +35,10 @@ class Ecran_Recette(tk.Frame):
 
     def recup_liste_mot_clef(self):
         """ Recuperation de la liste des mots clefs"""
-        self.liste_mot_clef = Bdd.get_liste_mot_clef(self.bdd)
+        self.liste_mot_clef = self.bdd.get_liste_mot_clef()
 
     def afficher_detail_ingredient(self):
         """ Afficher le détail d'un ingrédient sélectionné"""
-        self.saisinom.get()
         for i in self.liste_ingredient_complete:
             if i.get_nom() == self.saisinom.get():
                 self.saisilieu.delete(0, tk.END)
@@ -183,7 +182,7 @@ class Ecran_Recette(tk.Frame):
         # recupération de l'écran précédent
         ecran_origine = self.controller.frame_prec
         if ecran_origine == "Ecran_Liste_Recette":
-            lien = Ecran_liste_recettes.Ecran_Liste_Recette
+            lien = Ecran_Liste_Recette.Ecran_Liste_Recette
         else:
             lien = None
         if ecran_origine != "Ecran_Ingredient":
@@ -377,7 +376,7 @@ class Ecran_Recette(tk.Frame):
         self.vscroll_motclef.pack(side=tk.RIGHT, expand=tk.N, fill=tk.Y, padx=1, pady=1)
         self.lbox_motclef.pack(side=tk.LEFT, padx=2, pady=2, fill=tk.X)
         self.frame_list_mot_clef.grid(row=2, column=0, pady=10, sticky=tk.W)
-        # -- SS FRAME LISTE INGREDIENT FIN
+        # -- SS FRAME MOTS CLEFS FIN
         self.frame_mot_recette.grid(row=0, column=0, pady=10, padx=5, sticky=tk.NW)
 
         # -- SS FRAME SAISI TEXTE DE LA RECETTE

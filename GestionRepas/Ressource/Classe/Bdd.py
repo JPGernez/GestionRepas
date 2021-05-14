@@ -97,18 +97,22 @@ class Bdd:
            CREATE TABLE IF NOT EXISTS repas_recettes(
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                 id_repas INT,
-                id_recette INT
+                id_recette INT,
+                titre_recette TEXT
                )
            """)
         self.conn.commit()
 
     def supp_table(self):
-        """ remplacer le nom de ma table et décommenter l'appel à l'init de la class BDD"""
+        """  décommenter la suppression a faire"""
         # cursor = self.conn.cursor()
         # cursor.execute(""" DROP TABLE IF EXISTS ingredient ;""")
         # cursor.execute(""" DROP TABLE IF EXISTS recette ;""")
         # cursor.execute(""" DROP TABLE IF EXISTS recette_ingredients ;""")
         # cursor.execute(""" DROP TABLE IF EXISTS recette_mot_clef ;""")
+        # cursor.execute(""" DROP TABLE IF EXISTS repas ;""")
+        # cursor.execute(""" DROP TABLE IF EXISTS repas_ingredients ;""")
+        # cursor.execute(""" DROP TABLE IF EXISTS repas_recettes ;""")
         # self.conn.commit()
 
     def __init__(self):
@@ -258,7 +262,6 @@ class Bdd:
             rows3 = cursor3.fetchall()
             for row3 in rows3:
                 mc.append(row3[0])
-                print(mc)
             r = Recette(titre=row[1], mc=mc, url=row[2], recette=row[3], nb_personne=row[4], difficulte=row[5],
                         note=row[6], temps_prepa=row[7], temps_cuisson=row[8], commentaire=row[9],
                         ingredients=list_ing, id_recette=row[0])
@@ -320,15 +323,15 @@ class Bdd:
             VALUES(?, ?, ?, ?, ?, ? )""",
                            (i, ing.nom, ing.lieu, ing.unite, ing.nb, ing.commentaire))
         for rec in repas.get_recettes():
-            cursor.execute("""INSERT INTO repas_recettes(id_repas, id_recette) 
-            VALUES(?, ?  )""", (i, rec.get_id()))
+            cursor.execute("""INSERT INTO repas_recettes(id_repas, id_recette, titre_recette) 
+            VALUES(?, ?, ?  )""", (i, rec.get_id(), rec.get_titre()))
         self.conn.commit()
         return i
 
     def modif_repas(self, repas: Repas):
         """ modification d'un repas de la BDD"""
         cursor = self.conn.cursor()
-        cursor.execute("""UPDATE repas set date = ?, moemnt = ?, nb_personne = ?, commentaire = ? where id = ?""",
+        cursor.execute("""UPDATE repas set date = ?, moment = ?, nb_personne = ?, commentaire = ? where id = ?""",
                        (repas.get_date(), repas.get_moment(), repas.get_nbpersonnes(), repas.get_commentaire(),
                         repas.get_id()))
         self.conn.commit()
@@ -346,8 +349,8 @@ class Bdd:
         self.conn.commit()
         for rec in repas.get_recettes():
             cursor = self.conn.cursor()
-            cursor.execute("""INSERT INTO repas_recettes(id_repas, id_recette) 
-                              VALUES(?, ? )""", (repas.get_id(), rec.get_id()))
+            cursor.execute("""INSERT INTO repas_recettes(id_repas, id_recette, titre_recette ) 
+                              VALUES(?, ?, ? )""", (repas.get_id(), rec.get_id(), rec.get_titre()))
             self.conn.commit()
 
     def supp_repas(self, id_repas: int):
@@ -390,7 +393,7 @@ class Bdd:
             rows3 = cursor3.fetchall()
             for row3 in rows3:
                 list_recette.append(self.get_recette(row3[0]))
-            repas = Repas(date=row[1], moment=row[2], nb=row[3], commentaire=row[4],
+            repas = Repas(date=datetime.datetime.strptime(row[1], '%Y-%m-%d').date(), moment=row[2], nb=row[3], commentaire=row[4],
                           ingredients=list_ing, recettes=list_recette, id_repas=row[0])
         return repas
 
@@ -400,7 +403,7 @@ class Bdd:
         cursor.execute("""SELECT id, date, moment, nb_personne, commentaire FROM repas where date= ? and moment= ?""",
                        (date, moment))
         rows = cursor.fetchall()
-        repas = None
+        repas = Repas(date=date, moment=moment)
         for row in rows:
             id_repas = row[0]
             list_ing = []
@@ -421,8 +424,8 @@ class Bdd:
             rows3 = cursor3.fetchall()
             for row3 in rows3:
                 list_recette.append(self.get_recette(row3[0]))
-            repas = Repas(date=row[1], moment=row[2], nb=row[3], commentaire=row[4],
-                          ingredients=list_ing, recettes=list_recette, id_repas=row[0])
+            repas = Repas(date=datetime.datetime.strptime(row[1], '%Y-%m-%d').date(), moment=row[2], nb=row[3],
+                          commentaire=row[4], ingredients=list_ing, recettes=list_recette, id_repas=row[0])
         return repas
 
     def get_liste_menu_date(self, date: datetime.date, moment: str):
@@ -433,7 +436,7 @@ class Bdd:
         rows = cursor.fetchall()
         list_ing = []
         list_recette = []
-        list_menu = []
+        list_repas = []
         for row in rows:
             id_repas = row[0]
             cursor2 = self.conn.cursor()
@@ -441,17 +444,19 @@ class Bdd:
             rows2 = cursor2.fetchall()
             for row2 in rows2:
                 list_ing.append(row2[0])
-                list_ing.sort()
-                list_recette = []
-                cursor3 = self.conn.cursor()
-                cursor3.execute("""SELECT id_recette FROM repas_recettes where id_repas= ?""",
-                                (id_repas,))
-                rows3 = cursor3.fetchall()
-                for row3 in rows3:
-                    list_recette.append(self.get_recette(row3[0]).get_titre())
-                list_recette.sort()
-            list_menu = list_recette + list_ing
+            list_ing.sort()
+            cursor3 = self.conn.cursor()
+            cursor3.execute("""SELECT titre_recette FROM repas_recettes where id_repas= ?""",
+                            (id_repas,))
+            rows3 = cursor3.fetchall()
+            for row3 in rows3:
+                list_recette.append(row3[0])
+            list_recette.sort()
+            if len(list_recette)>0:
+                list_repas.append(' / '.join(list_recette))
+            if len(list_ing) > 0:
+                list_repas.append(' / '.join(list_ing))
             if len(row[1]) > 1:
-                comm = f"Rq: {row[0]}"
-                list_menu.append(comm)
-        return list_menu
+                comm = f"=> {row[1]}"
+                list_repas.append(comm)
+        return list_repas

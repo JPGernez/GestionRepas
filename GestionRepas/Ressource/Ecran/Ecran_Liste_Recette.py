@@ -14,7 +14,7 @@ class Ecran_Liste_Recette(tk.Frame):
 
     def recup_liste_nom_ingredient(self):
         """ Recuperation de la liste noms d'ingrédient"""
-        liste_ingredient = Bdd.get_liste_ingredients(self.bdd)
+        liste_ingredient = self.bdd.get_liste_ingredients()
         self.liste_nom_ingredient = []
         for i in liste_ingredient:
             if i.get_nom() not in self.liste_nom_ingredient:
@@ -23,16 +23,16 @@ class Ecran_Liste_Recette(tk.Frame):
 
     def recup_mot_clef(self):
         """ Recuperation de la liste noms d'ingrédient"""
-        self.liste_mot_clef = Bdd.get_liste_mot_clef(self.bdd)
+        self.liste_mot_clef = self.bdd.get_liste_mot_clef()
 
     def recup_liste_recette(self):
         """Recuperation de la liste des recettes et des mots clefs depuis la BDD
            Mets a jour 2 listes existantes: liste_recette et liste_mot_clef
            """
-        self.liste_recette = Bdd.get_liste_recette(self.bdd)
+        self.liste_recette = self.bdd.get_liste_recette()
         self.liste_recette = sorted(self.liste_recette,
                                     key=lambda recette: recette.get_titre())
-        self.liste_mot_clef = Bdd.get_liste_mot_clef(self.bdd)
+        self.liste_mot_clef = self.bdd.get_liste_mot_clef()
 
     def ajout_recette(self):
         """Ouvre l'écran de saisi d'une recette
@@ -41,9 +41,9 @@ class Ecran_Liste_Recette(tk.Frame):
         self.controller.show_frame(Ecran_recette.Ecran_Recette)
 
     def affich_recette(self):
-        """Ouvre l'écran de saisi d'une recette sur une recette définie
+        """Ouvre l'écran de sa.lbox_recette.curselection()isi d'une recette sur une recette définie
            """
-        if self.lbox_recette.curselection() is not None and self.lbox_recette.curselection() != ():
+        if self is not None and self.lbox_recette.curselection() != ():
             selection = self.lbox_recette.curselection()[0]
             self.id_recette = self.liste_recette_affiche[selection].get_id()
             self.controller.show_frame(Ecran_recette.Ecran_Recette)
@@ -51,7 +51,6 @@ class Ecran_Liste_Recette(tk.Frame):
     def afficher_liste_recette(self, *event):
         """ Affichage de la liste des recettes à l'écran
             Remise à 0 de la partie modificaton de l'ingrédient"""
-        print('Ingredient ', event)
         self.lbox_recette.delete(0, tk.END)
         self.liste_recette_affiche = []
         if self.lbox_ingredients.curselection() is not None and self.lbox_ingredients.curselection() != ():
@@ -88,7 +87,6 @@ class Ecran_Liste_Recette(tk.Frame):
 
     def on_show_frame(self, event):
         """Initialisation de la fenetre """
-        print(event)
         # Recup de la liste de départ
         self.recup_liste_nom_ingredient()
         self.recup_mot_clef()
@@ -134,7 +132,7 @@ class Ecran_Liste_Recette(tk.Frame):
         self.lbox_ingredients.config(yscrollcommand=self.vscroll_ingredients.set)
         self.lbox_ingredients.bind("<<ListboxSelect>>", self.afficher_liste_recette)
         self.vscroll_ingredients.pack(side=tk.RIGHT, expand=tk.N, fill=tk.Y, padx=1, pady=1)
-        self.lbox_ingredients.pack( padx=2, pady=2)
+        self.lbox_ingredients.pack(padx=2, pady=2)
         # liste des ingrédients
         self.label = tk.Label(self.frame_recherche, text="Choix mots clefs: ", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG)
         self.label.pack(padx=2, pady=12)

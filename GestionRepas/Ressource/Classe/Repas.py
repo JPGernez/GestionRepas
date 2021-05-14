@@ -18,7 +18,7 @@ class Repas:
             - nb de personne
             - commentaire
     """
-    def __init__(self, date: datetime = None, moment: str = None, recettes: [Recette] = None,
+    def __init__(self, date: datetime.date = None, moment: str = None, recettes: [Recette] = None,
                  ingredients: [Ingredient] = None, nb=4, commentaire='', id_repas: int = None):
         if recettes is None:
             recettes = []
@@ -91,7 +91,7 @@ class Repas:
         """assigne un commentaire (texte)"""
         self.commentaire = c
 
-    def set_date(self, d: datetime):
+    def set_date(self, d: datetime.date):
         """assigne la date du repas (datetime)"""
         self.date = d
 

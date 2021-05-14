@@ -19,7 +19,7 @@ class Ecran_Ingredient(tk.Frame):
         """Recuperation de la liste des ingredients dans la BDD
            Mets a jour 2 listes existantes: liste_ingredient_complete et liste_lieu
            """
-        self.liste_ingredient_complete = Bdd.get_liste_ingredients(self.bdd)
+        self.liste_ingredient_complete = self.bdd.get_liste_ingredients()
         self.liste_ingredient_complete = sorted(self.liste_ingredient_complete,
                                                 key=lambda ingredient: ingredient.get_nom())
         self.liste_lieu = []
@@ -40,7 +40,7 @@ class Ecran_Ingredient(tk.Frame):
         if len(self.saisinom.get()) > 2:
             ing = Ingredient(nom=self.saisinom.get(), lieu=self.saisilieu.get(), unite=self.saisiunite.get(), nb=nb,
                              commentaire=self.saisicomm.get())
-            Bdd.add_ingredient(self.bdd, ing)
+            self.bdd.add_ingredient(ing)
             self.recup_liste_ingredient()
             self.afficher_liste_ingredients()
 
@@ -56,7 +56,7 @@ class Ecran_Ingredient(tk.Frame):
             ing = Ingredient(nom=self.saisinom.get(), lieu=self.saisilieu.get(), unite=self.saisiunite.get(), nb=nb,
                              commentaire=self.saisicomm.get(),
                              id_ingredient=self.liste_ingredient[self.id_select].get_id())
-            Bdd.modif_ingredient(self.bdd, ing)
+            self.bdd.modif_ingredient(ing)
         self.recup_liste_ingredient()
         self.afficher_liste_ingredients()
 
@@ -66,7 +66,7 @@ class Ecran_Ingredient(tk.Frame):
            et affichage de ces listes a l'écran"""
         if self.id_select is not None:
             id_supp = self.liste_ingredient[self.id_select].get_id()
-            Bdd.supp_ingredient(self.bdd, id_supp)
+            self.bdd.supp_ingredient(id_supp)
         self.recup_liste_ingredient()
         self.afficher_liste_ingredients()
 
