@@ -23,10 +23,8 @@ class Ecran_Accueil(tk.Frame):
         """Mise a jour de la liste des jours a faire apparaitre sur le calendrier"""
         self.l_jours = []
         for i in range(self.nb_jour):
-            self.l_jours = []
-            for i in range(self.nb_jour):
-                dt = self.premier_jour + datetime.timedelta(days=i)
-                self.l_jours.append(dt)
+            dt = self.premier_jour + datetime.timedelta(days=i)
+            self.l_jours.append(dt)
 
     def recup_liste_ingredient(self):
         """ Recuperation de la liste des ingredients et de la liste des noms d'ingrédient"""
@@ -51,6 +49,12 @@ class Ecran_Accueil(tk.Frame):
 
     def affichage_detail_repas(self):
         """Affichage du détail du repas sélectionné"""
+        dt = self.repas_select.get_date()
+        d = dt.strftime("%d/%m/%y")
+        jsem = Ct.JOURS[dt.weekday()]
+        m = self.repas_select.get_moment()
+        self.label_detail.config(text=f"Détail du repas du {jsem} {d} {m}")
+
         self.lbox_recette.delete(0, tk.END)
         for rec in self.repas_select.get_recettes():
             self.lbox_recette.insert(tk.END, rec.get_titre())
@@ -76,12 +80,17 @@ class Ecran_Accueil(tk.Frame):
 
     def detail_repas(self, dt: datetime.date, m: str):
         """Affichage du détail du repas sélectionné"""
-        d = dt.strftime("%d/%m/%y")
-        jsem = Ct.JOURS[dt.weekday()]
-        self.label_detail.config(text=f"Détail du repas du {jsem} {d} {m}")
         self.repas_select = self.bdd.get_repas_date(date=dt, moment=m)
         self.affichage_calendrier()
         self.affichage_detail_repas()
+
+    def menu_calendrier_do_popup(self, event, dt: datetime.date, m: str):
+        """Affichage du menu qui est associé au click droit"""
+        try:
+            self.detail_repas(dt, m)
+            self.menu_calendrier.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu_calendrier.grab_release()
 
     def affichage_calendrier(self):
         """Affichage du calendrier"""
@@ -93,7 +102,7 @@ class Ecran_Accueil(tk.Frame):
         self.ss_frame_calendrier.grid_columnconfigure(2, weight=10)
         frame_navigation = tk.Frame(self.ss_frame_calendrier, bg=Ct.BG)
         navig_avant_bouton = tk.Button(frame_navigation, text="Avant", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG,
-                                    command=self.navig_avant)
+                                       command=self.navig_avant)
         navig_avant_bouton.grid(row=0, column=0, padx=2, sticky=tk.W)
         navig_apres_bouton = tk.Button(frame_navigation, text="Après", font=Ct.FONT, bg=Ct.BG, fg=Ct.FG,
                                        command=self.navig_apres)
@@ -121,7 +130,11 @@ class Ecran_Accueil(tk.Frame):
             label = tk.Label(self.ss_frame_calendrier, text=repas, font=Ct.FONT, bg=Ct.BG, fg=Ct.FG, anchor='w')
             if self.repas_select.get_date() == j and self.repas_select.get_moment() == 'Midi':
                 label.configure(bg='red')
+            elif self.repas_copie is not None:
+                if self.repas_copie.get_date() == j and self.repas_copie.get_moment() == 'Midi':
+                    label.configure(bg='orange')
             label.bind("<Button-1>", lambda e, d=j: self.detail_repas(d, 'Midi'))
+            label.bind("<Button-3>", lambda e, d=j: self.menu_calendrier_do_popup(e, d, 'Midi'))
             label.grid(row=nb, column=1, sticky=tk.W)
             repas = '\n'.join(self.bdd.get_liste_menu_date(j, 'Soir'))
             if len(repas) < 2:
@@ -129,9 +142,12 @@ class Ecran_Accueil(tk.Frame):
             label = tk.Label(self.ss_frame_calendrier, text=repas, font=Ct.FONT, bg=Ct.BG, fg=Ct.FG, anchor='w')
             if self.repas_select.get_date() == j and self.repas_select.get_moment() == 'Soir':
                 label.configure(bg='red')
+            elif self.repas_copie is not None:
+                if self.repas_copie.get_date() == j and self.repas_copie.get_moment() == 'Soir':
+                    label.configure(bg='orange')
             label.bind("<Button-1>", lambda e, d=j: self.detail_repas(d, 'Soir'))
+            label.bind("<Button-3>", lambda e, d=j: self.menu_calendrier_do_popup(e, d, 'Soir'))
             label.grid(row=nb, column=2, sticky=tk.W)
-            ttk.Separator(self.ss_frame_calendrier, orient=tk.HORIZONTAL).grid(column=0, row=nb+1, columnspan=3, sticky='we')
             nb += 1
         self.ss_frame_calendrier.pack(side=tk.LEFT, expand=True, fill=tk.X)
 
@@ -164,6 +180,11 @@ class Ecran_Accueil(tk.Frame):
             ing = Ingredient(nom=self.saisiingredient.get(), lieu=self.saisilieu.get(),
                              unite=self.saisiunite.get(), nb=nb, commentaire=self.saisicomm.get())
             self.repas_select.add_ingrediente(ing)
+            self.saisiingredient.set('')
+            self.saisilieu.delete(0, tk.END)
+            self.saisiunite.delete(0, tk.END)
+            self.saisicomm.delete(0, tk.END)
+            self.saisinbing.delete(0, tk.END)
         self.affichage_detail_repas()
 
     def add_recette(self):
@@ -185,16 +206,67 @@ class Ecran_Accueil(tk.Frame):
                 self.repas_select.supp_ingredient(selection-len(self.repas_select.get_recettes()))
             self.affichage_detail_repas()
 
-    def save_repas(self):
-        """Ajout d'un ingredient au repas"""
-        self.repas_select.set_commentaire(self.saisicomm_repas.get())
-        self.repas_select.set_nbpersonnes(self.saisinbpers.get())
+    def save_repas_bdd(self):
         if self.repas_select.get_id() is None:
             id_repas = self.bdd.add_repas(self.repas_select)
             self.repas_select.set_id(id_repas)
         else:
             self.bdd.modif_repas(self.repas_select)
         self.affichage_calendrier()
+
+    def save_repas_copie_bdd(self):
+        if self.repas_copie.get_id() is None:
+            id_repas = self.bdd.add_repas(self.repas_copie)
+            self.repas_copie.set_id(id_repas)
+        else:
+            self.bdd.modif_repas(self.repas_copie)
+
+    def save_repas(self):
+        """Ajout d'un ingredient au repas"""
+        self.repas_select.set_commentaire(self.saisicomm_repas.get())
+        self.repas_select.set_nbpersonnes(self.saisinbpers.get())
+        self.save_repas_bdd()
+
+    def copie_selected(self):
+        self.repas_copie = self.repas_select
+
+    def colle_remplace_selected(self):
+        if self.repas_copie is not None:
+            self.repas_select.set_ingredients(self.repas_copie.get_ingredients())
+            self.repas_select.set_recettes(self.repas_copie.get_recettes())
+            self.repas_select.set_nbpersonnes(self.repas_copie.get_nbpersonnes())
+            self.repas_select.set_commentaire(self.repas_copie.get_commentaire())
+            self.repas_copie = None
+            self.save_repas_bdd()
+            self.affichage_detail_repas()
+
+    def colle_ajoute_selected(self):
+        if self.repas_copie is not None:
+            self.repas_select.add_ingredients(self.repas_copie.get_ingredients())
+            self.repas_select.add_recettes(self.repas_copie.get_recettes())
+            self.repas_copie = None
+            self.save_repas_bdd()
+            self.affichage_detail_repas()
+
+    def echange_selected(self):
+        if self.repas_copie is not None:
+            d=self.repas_select.get_date()
+            m=self.repas_select.get_moment()
+            self.repas_select.set_date(self.repas_copie.get_date())
+            self.repas_select.set_moment(self.repas_copie.get_moment())
+            self.repas_copie.set_date(d)
+            self.repas_copie.set_moment(m)
+            self.save_repas_copie_bdd()
+            self.repas_copie = None
+            self.save_repas_bdd()
+            self.affichage_detail_repas()
+
+
+    def supprime_selected(self):
+        if self.repas_select.get_id() is not None:
+            self.bdd.supp_repas(self.repas_select.get_id())
+            self.detail_repas(self.repas_select.get_date(), self.repas_select.get_moment())
+            self.repas_copie = None
 
     def on_show_frame(self, event):
         """Initialisation de la fenetre """
@@ -228,6 +300,7 @@ class Ecran_Accueil(tk.Frame):
         self.liste_recette = []
         self.liste_nom_recette = []
         self.bind("<<ShowFrame>>", self.on_show_frame)
+        self.repas_copie = None
 
         # Récupération du samedi de la semaine
         dt = datetime.date.today()
@@ -241,6 +314,20 @@ class Ecran_Accueil(tk.Frame):
 
         # Création de la fenetre
         self.window = tk.Frame(self, bg=Ct.BG)
+
+        # Création du menu pop up au clik sur un label du calendrier
+        self.menu_calendrier = tk.Menu(self.window, tearoff=0)
+        self.menu_calendrier.add_command(label="Copier",
+                                         command=self.copie_selected)
+        self.menu_calendrier.add_command(label="Coller-Remplacer",
+                                         command=self.colle_remplace_selected)
+        self.menu_calendrier.add_command(label="Ajouter les recettes",
+                                         command=self.colle_ajoute_selected)
+        self.menu_calendrier.add_command(label="Echanger",
+                                         command=self.echange_selected)
+        self.menu_calendrier.add_separator()
+        self.menu_calendrier.add_command(label="Supprimer",
+                                         command=self.supprime_selected)
 
         # Affichage de la partie calendrier
         self.frame_calendrier = tk.Frame(self.window, bg=Ct.BG)
@@ -337,7 +424,7 @@ class Ecran_Accueil(tk.Frame):
         self.saisicomm.grid(row=7, column=2, padx=20, sticky=tk.W, columnspan=2)
 
         self.frame_ajout_recette.grid(column=3, row=1, padx=20, sticky=tk.W)
-        self.frame_detail.pack(padx=35, pady=35, fill=tk.X)
+        self.frame_detail.pack(padx=35, pady=5, fill=tk.X)
         self.window.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         self.detail_repas(self.repas_select.get_date(), self.repas_select.get_moment())
         self.recup_liste_ingredient()

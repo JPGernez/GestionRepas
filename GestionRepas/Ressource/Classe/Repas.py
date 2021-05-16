@@ -83,6 +83,14 @@ class Repas:
         """assigne la liste de ingredients (liste de Ingredient)"""
         self.ingredients = i
 
+    def add_ingredients(self, i: [Ingredient]):
+        """ajoute la liste de ingredients (liste de Ingredient)"""
+        self.ingredients = self.ingredients + i
+
+    def add_recettes(self, r: [Recette]):
+        """ajoute la liste de ingredients (liste de Ingredient)"""
+        self.recettes = self.recettes + r
+
     def set_nbpersonnes(self, nb: int):
         """assigne le nb de personnes (int)"""
         self.nb_personnes = nb
